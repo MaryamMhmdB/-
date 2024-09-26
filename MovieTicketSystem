@@ -1,0 +1,633 @@
+
+#include <iostream>
+#include <cctype>
+#include <string>
+#include <fstream>
+#include<ctime>
+using namespace std;
+
+int ticket = 128, serialnum = 1, numofmovies = 5, x, y, indexofinfo = 3, n = 6;
+int countCustomer = 0;
+string title;
+char t;
+
+//arrays of structures
+struct info {
+	string name;
+	string moviename;
+	char timee;
+	int ticketnumber;
+	int column;
+	string row;
+
+
+} personalinfo[100];
+
+
+struct movie {
+	int movnum;
+	string moviename;
+	string time1;
+	string time2;
+	string time3;
+	double rate;
+
+} movies[20];
+
+//arrays
+
+string seats[5][6];
+
+//functions prototype;
+string ticketbookingsentence(int a);
+void moviestable();
+void sortMoviesByRate(movie movies[], int numofmovies);
+void booking(info personalinfo[], movie movies[], int& ticket, int& indexofinfo);
+void addMovie(const string& title, double rate);
+void delete1(const string& title);
+void delete1();
+void seatstable();
+void displayTicket();
+void update();
+void writeDataToFile(const string& filename);
+void readDataFromFile(const string& filename);
+void savestat();
+
+int main() {
+	string filename = "file.txt";
+	readDataFromFile(filename);
+
+	int count = 3;
+	char choice[20], service;
+	//count for the chances for manager to access the system
+	string username = "admin", password = "123", username1, password1;
+	bool n = true;
+
+	//Manager's username and password 
+
+	while (true) {
+
+		cout << "* * * * * * * * * * * * * * * * * * * * * * * * " << endl;
+		cout << "*        Welcome to Movie Ticket Booking      *" << endl;
+		cout << "*                    System                   *" << endl;
+		cout << "*                                             *" << endl;
+		cout << "* <1> Customer                                *" << endl;
+		cout << "* <2> Manager                                 *" << endl;
+		cout << "* <3> Exit                                    *" << endl;
+		cout << "*                                             *" << endl;
+		cout << "* * * * * * * * * * * * * * * * * * * * * * * * " << endl;
+		cout << "Enter Your Choice : ";
+		cin >> choice;
+
+		if (choice[0] == '1') {
+			cout << "Welcome Customer!\n\n" << "<1> Ticket booking\n<2> Display movies\n<3> Ticket information\n<4> Modify reservation\n<5> Delete existing ticket\n" << endl << "Please Enter The Service Number : ";
+			cin >> service;
+
+			switch (service) {
+			case '1':
+
+				cout << ticketbookingsentence(1);
+				moviestable();
+
+				booking(personalinfo, movies, ticket, indexofinfo);
+				break;
+
+			case '2':
+				cout << ticketbookingsentence(0);
+				moviestable();
+				while (true) {
+					cout << "\nDo you want to sort these movies by rate ? ";
+					string a; cin >> a;
+					if (a == "yes" || a == "Yes") {
+						sortMoviesByRate(movies, numofmovies);
+						break;
+					}
+					else if (a == "no" || a == "No")
+						break;
+					else {
+						cout << "please enter yes or no only\n";
+						continue;
+					}
+				}
+				break;
+			case '3':
+				displayTicket();
+				break;
+
+			case '4':
+				update();
+				break;
+
+			case '5':
+				delete1();
+				break;
+			}
+		}
+
+		else if (choice[0] == '2') {
+			while (true) {
+				cout << "Enter your username:";
+				cin >> username1;
+				cout << "Enter your password:";
+				cin >> password1;
+
+				if (username == username1 && password == password1) {
+					cout << "Welcome " << username << "!\n\n" << "<1> Add a movie\n<2> Delete a movie\n" << endl << "Please Enter Your Choice: ";
+					int mchoice;
+					cin >> mchoice;
+					switch (mchoice) {
+
+					case 1:
+						cout << "Enter new movie : ";
+						cin.ignore();
+						getline(cin, title);
+						cout << "\nEnter the rate of the new movie : ";
+						double rate; cin >> rate;
+						addMovie(title, rate);
+						break;
+
+					case 2:
+						cout << "enter the movie you would like to delete : \n";
+						cin.ignore();
+						getline(cin, title);
+						delete1(title);
+						break;
+
+					default:
+						cout << "Invalid choice\n";
+					}
+					break;
+				}
+				else if (count == 0) {
+					cout << "Sorry, you failed to access the system!\n" << endl;
+					break;
+				}
+
+				else {
+
+					cout << "Incorrect username or password, you have " << count << " chances to try" << endl;
+					count--;
+				}
+
+			}
+
+		}
+		else if (choice[0] == '3') {
+			cout << "thank you:)!";
+			savestat();
+			break;
+		}
+		else if (choice[0] == 0 || choice[0] > 3)
+			cout << "Please Enter 1,2 or 3!\n";
+	}
+	writeDataToFile(filename);
+
+	return 0;
+}
+
+//***************************** functions  **************************************
+
+//sentence function
+string ticketbookingsentence(int a) {
+	string q = "\n                                **************************\n                                      TICKET BOOKING\n                                **************************\n";
+	string o = "\n                                **************************\n                                     Available movies \n                                **************************\n";
+	if (a == 1)
+		return q;
+	else
+		return o;
+}
+
+//DISPLAY FUNCTION
+void moviestable() {
+	cout << "\n--------------------------------------------------------------------------------------\nSERIAL NUMBER\t MOVIE NAME      \tTIME SHOW(1) \tTIME SHOW(2) \t TIME SHOW(3)\n--------------------------------------------------------------------------------------\n";
+	for (int i = 0; i < numofmovies; i++) {
+		int u = (movies[i].moviename).length();
+		if (u <= 7)
+			cout << "     " << i + 1 << "\t\t" << movies[i].moviename << "\t"
+			<< "\t\t" << movies[i].time1 << "\t         " << movies[i].time2 << "\t    " << movies[i].time3 << "\n";
+		else
+			cout << "     " << i + 1 << "\t\t" << movies[i].moviename << "\t\t" << movies[i].time1 << "\t         "
+			<< movies[i].time2 << "\t    " << movies[i].time3 << "\n";
+		serialnum++;
+	}
+}
+//seats function
+void seatstable() {
+	cout << "-----------------------------\n";
+	for (int i = 0; i < 5; i++) {
+		for (int j = 0; j < 6; j++) {
+			cout << seats[i][j] << "\t";
+		}
+		cout << endl;
+	}
+	cout << "-----------------------------\n\n";
+}
+//SORT FUNCTION
+void sortMoviesByRate(movie movies[], int numofmovies) {
+	// Sort the movies array by rate in descending order
+	for (int i = 0; i < numofmovies - 1; i++) {
+		for (int j = 0; j < numofmovies - 1; j++) {
+			if (movies[j].rate < movies[j + 1].rate) {
+				// Swap movies if their rates are in the wrong order
+				movie temp = movies[j];
+				movies[j] = movies[j + 1];
+				movies[j + 1] = temp;
+			}
+		}
+	}
+	// Print the sorted movies
+	cout << "\n--------------------------------\n";
+	cout << "Movies Sorted by Rate:\n";
+	cout << "--------------------------------\n";
+	cout << "MOVIE NAME\t\tRATE\n";
+	cout << "--------------------------------\n";
+	for (int i = 0; i < numofmovies; i++) {
+		if (movies[i].moviename.length() <= 7)
+			cout << movies[i].moviename << "\t\t\t(" << movies[i].rate << ")    \n";
+		else
+			cout << movies[i].moviename << "\t\t(" << movies[i].rate << ")   \n";
+	}
+	cout << endl << endl;
+}
+//BOOKING FUNCTION
+void booking(info personalinfo[], movie movies[], int& ticket, int& indexofinfo) {
+	while (true) {
+		bool k = true;
+		cout << "\nPlease Enter your first name : ";
+		cin >> personalinfo[indexofinfo].name;
+		string a = personalinfo[indexofinfo].name;
+		for (int i = 0; i < a.length(); i++) {
+			if (isdigit(a[i])) {
+				k = false;
+				break;
+			}
+		}
+		if (k == false) {
+			cout << " Please enter a vaild name..\n";
+			continue;
+		}
+		else break;
+	}
+
+	cout << "\nPlease select a movie [1,2,3....] : "; 	cin >> x;
+	while (true) {
+		if (x > 20 || x<1 || x>numofmovies) {
+			cout << " Please enter a vaild number..\n";
+			cin.clear();
+			cin.ignore(1000, '\n');
+			cout << "\nPlease select a movie [1,2,3....] : "; 	cin >> x;
+
+			continue;
+		}
+		else
+			break;
+	}
+
+	cout << "\nWhich show time you want to select [4,6,or 8] :"; cin >> personalinfo[indexofinfo].timee;
+	while (true) {
+		if (!((personalinfo[indexofinfo].timee == '6') || (personalinfo[indexofinfo].timee == '8') || (personalinfo[indexofinfo].timee == '4'))) {
+			cout << " Please enter 6, 8, or 10 only..\n";
+			cin.clear();
+			cin.ignore(1000, '\n');
+			cout << "\nWhich show time you want to select [4,6,or 8] :"; cin >> personalinfo[indexofinfo].timee;
+			continue;
+		}
+		else break;
+	}
+
+	seatstable();
+	cout << "Which row of seat you want to book for [A,B,C...] :";
+	cin >> personalinfo[indexofinfo].row;
+	while (true) {
+		char input = tolower((personalinfo[indexofinfo].row)[0]);
+
+		if (input >= 'a' && input <= 'e') {
+			break;
+		}
+		else {
+			cout << " Please enter a vaild row letter..\n";
+			cin.clear();
+			cin.ignore(1000, '\n');
+			cout << "Which row of seat you want to book for [A,B,C...] :";
+			cin >> personalinfo[indexofinfo].row;
+			continue;
+		}
+	}
+
+	cout << "Which column of seat you want to book for [1,2,3...] :";
+	cin >> personalinfo[indexofinfo].column;
+	while (true) {
+
+		if (personalinfo[indexofinfo].column < 1 || personalinfo[indexofinfo].column>6) {
+			cout << " Please enter a vaild column number..\n";
+			cin.clear();
+			cin.ignore(1000, '\n');
+			cout << "Which column of seat you want to book for [1,2,3...] :";
+			cin >> personalinfo[indexofinfo].column;
+			continue;
+		}
+		else { break; }
+	}
+
+	char t = toupper((personalinfo[indexofinfo].row)[0]);
+	cout << "\n** Your ticket has been booked successfully. You must make payment at the cinema reception staff **";
+	cout << "\n-------------------------------\nHere is your ticket information\n-------------------------------\n";
+	cout << "Your name : " << personalinfo[indexofinfo].name;
+	cout << "\nYour movie time is : " << personalinfo[indexofinfo].timee << ":00 PM";
+
+	cout << "\nYour movie is : " << movies[x - 1].moviename;
+	personalinfo[indexofinfo].moviename = movies[x - 1].moviename;
+	cout << "\nYour seat is : [ " << t << " , " << personalinfo[indexofinfo].column << " ]";
+	personalinfo[indexofinfo].ticketnumber = ticket++;
+
+	cout << "\nYour ticket number is : " << personalinfo[indexofinfo].ticketnumber;
+	cout << endl << "-------------------------------\n";
+	cout << "press a key to back : ";
+	string back; cin >> back;
+	indexofinfo++;
+	countCustomer++;
+}
+
+//display ticket information
+void displayTicket() {
+	string nameToBeFound;
+	cout << "Please enter your name : ";
+	cin >> nameToBeFound;
+	bool found = false;
+	for (int i = 0; i < indexofinfo; i++) {
+		if (personalinfo[i].name == nameToBeFound) {
+			found = true;
+			cout << "\n--------------------------------\n Here is your ticket information\n--------------------------------\n";
+			cout << "Ticket number: " << personalinfo[i].ticketnumber << endl;
+			cout << "Movie name: " << personalinfo[i].moviename << endl;
+			cout << "Movie time: " << personalinfo[i].timee << ":00 PM" << endl;
+			cout << "Your seat is : [ " << (personalinfo[i].row) << " , " << personalinfo[i].column << " ]" << endl;
+			break;
+		}
+	}
+	if (!found) {
+		cout << "No ticket found for the name: " << nameToBeFound << endl;
+	}
+}
+// updating function
+void update() {
+	string nameToBeFound;
+	cout << "\nEnter your name : ";
+	cin >> nameToBeFound;
+	bool found = false;
+	for (int i = 0; i < indexofinfo; i++) {
+		if (personalinfo[i].name == nameToBeFound) {
+			found = true;
+			while (true) {
+				cout << "----------------------------" << endl;
+				cout << "   MODIFYING RESERVATION" << endl;
+				cout << "----------------------------" << endl;
+				cout << "\nWhat would you like to modify?" << endl;
+				cout << "\n1- Movie" << endl;
+				cout << "2- Show Time" << endl;
+				cout << "3- Seat" << endl;
+				cout << "4- Exit" << endl;
+				cout << "Enter your choice: ";
+				int NewChoice;
+				cin >> NewChoice;
+				switch (NewChoice) {
+				case 1: {
+					moviestable();
+					int x;
+					while (true) {
+						cout << "\nPlease enter the new movie number [1,2,3.....]: ";
+						cin >> x;
+						if (x < 1 || x > numofmovies) {
+							cout << "\nSorry, movie not found!" << endl;
+							continue;
+						}
+						else {
+							personalinfo[i].moviename = movies[x - 1].moviename;
+						}
+						break;
+					}
+					break;
+				}
+				case 2:
+					while (true) {
+						cout << "\nPlease enter the new showtime [4, 6, 8]: ";
+						char y;
+						cin >> y;
+						if (y != '4' && y != '6' && y != '8') {
+							cout << "\nSorry, showtime not available!";
+							continue;
+						}
+						else {
+							personalinfo[i].timee = y;
+						}
+						break;
+					}
+					break;
+				case 3:
+					while (true) {
+						cout << "\nPlease enter new seat row [A, B, C, D, E]: ";
+						char k;
+						cin >> k;
+						k = toupper(k); // Convert to uppercase
+						if (k < 'A' || k > 'E') {
+							cout << "\nSorry, invalid row!";
+							continue;
+						}
+						else {
+							personalinfo[i].row = k;
+							break;
+						}
+					}
+					while (true) {
+						cout << "\nPlease enter new seat column [1, 2, 3, 4, 5, 6]: ";
+						int z;
+						cin >> z;
+						if (z < 1 || z > 6) {
+							cout << "\nSorry, invalid column!";
+							continue;
+						}
+						else {
+							personalinfo[i].column = z;
+							break;
+						}
+					}
+					break;
+
+				default:
+					cout << "\nInvalid choice!" << endl;
+					break;
+				case 4:
+					return;
+				}
+			}
+		}
+	}
+	if (!found)
+		cout << "Name (" << nameToBeFound << ") has not been found!" << endl;
+}
+
+// Deleting ticket by name
+void delete1() {
+	string nameToBeDeleted;
+	cout << "Enter your name : ";
+	cin >> nameToBeDeleted;
+	int ticketIndex = -1;
+	for (int i = 0; i < indexofinfo; i++) {
+		if (personalinfo[i].name == nameToBeDeleted) {
+			ticketIndex = i;
+			break;
+		}
+	}
+	if (ticketIndex != -1) {
+		for (int i = ticketIndex; i < indexofinfo - 1; i++) {
+			personalinfo[i] = personalinfo[i + 1];
+		}
+		indexofinfo--;
+		countCustomer--;
+		cout << "Ticket for " << nameToBeDeleted << " has been deleted" << endl;
+	}
+	else {
+		cout << "No ticket found for the name: " << nameToBeDeleted << endl;
+	}
+}
+
+// Adding movies 
+int maxnumofmovies = 20;
+void addMovie(const string& title, double rate) {
+	if (numofmovies < maxnumofmovies) {
+		while (true) {
+			if (rate > 5 || rate < 0) {
+				cout << "Rate should be 5 or smaller and greater than 0!" << endl << "Enter the rate again:";
+				cin >> rate;
+			}
+			else
+				break;
+		}
+		movies[numofmovies].movnum = n++;
+		movies[numofmovies].moviename = title;
+		movies[numofmovies].rate = rate;
+		movies[numofmovies].time1 = "4:00 PM"; // Assuming these are default times
+		movies[numofmovies].time2 = "6:00 PM"; // Adjust as needed
+		movies[numofmovies].time3 = "8:00 PM";
+		numofmovies++;
+		cout << "The movie (" << title << ") is added successfully" << endl;
+	}
+	else
+		cout << "Cannot add the movie (" << title << ") the collection is full." << endl;
+}
+// Deleting movie by name
+void delete1(const string& title) {
+	int foundIndex = -1;
+	for (int i = 0; i < numofmovies; i++) {
+		if (movies[i].moviename == title) {
+			foundIndex = i;
+			break;
+		}
+	}
+	if (foundIndex != -1) {
+		for (int i = foundIndex; i < numofmovies - 1; i++) {
+			movies[i] = movies[i + 1];
+		}
+		numofmovies--;
+		cout << "Movie deleted: " << title << endl;
+	}
+	else {
+		cout << "Movie not found: " << title << endl;
+	}
+}
+
+
+//write in file function
+void writeDataToFile(const string& filename) {
+	ofstream outputFile;
+	outputFile.open(filename);
+	if (outputFile.is_open()) {
+		for (int i = 0; i < 5; i++) {
+			for (int j = 0; j < 6; j++) {
+				outputFile << seats[i][j] << " ";
+			}
+			outputFile << endl;
+		}
+		for (int i = 0; i < numofmovies; i++) {
+			outputFile << movies[i].movnum << ",";
+			outputFile << movies[i].moviename << ",";
+			outputFile << movies[i].time1 << ",";
+			outputFile << movies[i].time2 << ",";
+			outputFile << movies[i].time3 << ",";
+			outputFile << movies[i].rate << endl;
+		}
+
+		for (int i = 0; i < indexofinfo; i++) {
+			outputFile << personalinfo[i].name << ",";
+			outputFile << personalinfo[i].moviename << ",";
+			outputFile << personalinfo[i].timee << ",";
+			outputFile << personalinfo[i].ticketnumber << ",";
+			outputFile << personalinfo[i].column << ",";
+			outputFile << personalinfo[i].row << endl;
+		}
+
+		outputFile.close();
+		cout << "Data written to file successfully." << endl;
+	}
+	else {
+		cout << "Unable to open file for writing." << endl;
+	}
+}
+
+// Function to read data from file
+void readDataFromFile(const string& filename) {
+	ifstream inputFile("file.txt");
+	if (inputFile.is_open()) {
+		for (int i = 0; i < 5; i++) {
+			for (int j = 0; j < 6; j++) {
+				inputFile >> seats[i][j];
+			}
+		}
+		for (int i = 0; i < numofmovies; i++) {
+			inputFile.ignore(1);
+			inputFile >> movies[i].movnum;
+			inputFile.ignore(1);
+			getline(inputFile, movies[i].moviename, ',');
+			getline(inputFile, movies[i].time1, ',');
+			getline(inputFile, movies[i].time2, ',');
+			getline(inputFile, movies[i].time3, ',');
+			inputFile >> movies[i].rate;
+		}
+		inputFile.ignore(1);
+		for (int i = 0; i < indexofinfo; i++) {
+			getline(inputFile, personalinfo[i].name, ',');
+			getline(inputFile, personalinfo[i].moviename, ',');
+			inputFile >> personalinfo[i].timee;
+			inputFile.ignore(1);
+			inputFile >> personalinfo[i].ticketnumber;
+			inputFile.ignore(1);
+			inputFile >> personalinfo[i].column;
+			inputFile.ignore(1);
+			getline(inputFile, personalinfo[i].row);
+		}
+		inputFile.close();
+	}
+	else
+		cout << "Unable to open file for reading." << endl;
+}
+//Function to provide statistical report for the costemer number and time of last update.
+void savestat() {
+	ofstream repoetfile("statistical.txt");
+
+	// Getting the current time
+	time_t now = time(nullptr);
+	struct tm* currentTime = localtime(&now);
+
+	// Adding 3 hours to the current time
+	currentTime->tm_hour += 3;
+	mktime(currentTime); // Adjust mktime
+
+	// Formatting the adjusted time
+	char timeBuffer[80];
+	strftime(timeBuffer, 80, "%Y-%m-%d %H:%M:%S", currentTime);
+	// Writing statistical information to the file
+	repoetfile << "Total number of customers: " << countCustomer << endl;
+	repoetfile << "Time of last update: " << timeBuffer << endl;
+	repoetfile.close();
+}
+
